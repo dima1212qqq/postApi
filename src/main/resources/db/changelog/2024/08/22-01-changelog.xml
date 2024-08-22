@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="1724332867291-1" author="pante (generated)">
+        <createTable tableName="post_office">
+            <column name="index" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_postoffice"/>
+            </column>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="address" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="1724332867291-2" author="pante (generated)">
+        <createTable tableName="shipment">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_shipment"/>
+            </column>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="type" type="VARCHAR(255)"/>
+            <column name="index" type="VARCHAR(255)"/>
+            <column name="address" type="VARCHAR(255)"/>
+            <column name="status" type="VARCHAR(255)"/>
+            <column name="origin_post_office_id" type="VARCHAR(255)"/>
+            <column name="current_post_office_id" type="VARCHAR(255)"/>
+            <column name="destination_post_office_id" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="1724332867291-3" author="pante (generated)">
+        <createTable tableName="shipment_history">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_shipmenthistory"/>
+            </column>
+            <column name="shipment_id" type="BIGINT"/>
+            <column name="status" type="VARCHAR(255)"/>
+            <column name="current_post_office_index" type="VARCHAR(255)"/>
+            <column name="timestamp" type="DATETIME"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="1724332867291-4" author="pante (generated)">
+        <addForeignKeyConstraint baseColumnNames="current_post_office_index" baseTableName="shipment_history"
+                                 constraintName="FK_SHIPMENTHISTORY_ON_CURRENTPOSTOFFICE_INDEX"
+                                 referencedColumnNames="index" referencedTableName="post_office"/>
+    </changeSet>
+    <changeSet id="1724332867291-5" author="pante (generated)">
+        <addForeignKeyConstraint baseColumnNames="current_post_office_id" baseTableName="shipment"
+                                 constraintName="FK_SHIPMENT_ON_CURRENT_POST_OFFICE" referencedColumnNames="index"
+                                 referencedTableName="post_office"/>
+    </changeSet>
+    <changeSet id="1724332867291-6" author="pante (generated)">
+        <addForeignKeyConstraint baseColumnNames="destination_post_office_id" baseTableName="shipment"
+                                 constraintName="FK_SHIPMENT_ON_DESTINATION_POST_OFFICE" referencedColumnNames="index"
+                                 referencedTableName="post_office"/>
+    </changeSet>
+    <changeSet id="1724332867291-7" author="pante (generated)">
+        <addForeignKeyConstraint baseColumnNames="origin_post_office_id" baseTableName="shipment"
+                                 constraintName="FK_SHIPMENT_ON_ORIGIN_POST_OFFICE" referencedColumnNames="index"
+                                 referencedTableName="post_office"/>
+    </changeSet>
+
+</databaseChangeLog>
