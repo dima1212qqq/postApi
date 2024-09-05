@@ -73,7 +73,7 @@ public class PostOfficeView extends Div {
 
     private void saveOrUpdate(PostOfficeService postOfficeService) {
         saveOnDialog = new Button("Сохранить", buttonClickEvent -> {
-            postOfficeService.create(PostOffice.builder()
+            postOfficeService.save(PostOffice.builder()
                     .index(index.getValue().toString())
                     .name(name.getValue())
                     .address(address.getValue()).

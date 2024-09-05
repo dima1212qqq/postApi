@@ -8,7 +8,8 @@ import ru.dovakun.postapi.enums.StatusShipment;
 import ru.dovakun.postapi.model.Shipment;
 import ru.dovakun.postapi.model.ShipmentHistory;
 import ru.dovakun.postapi.model.PostOffice;
-import ru.dovakun.postapi.repo.ShipmentHistoryRepo;
+import ru.dovakun.postapi.service.PostOfficeService;
+import ru.dovakun.postapi.service.ShipmentHistoryService;
 import ru.dovakun.postapi.service.ShipmentService;
 
 import java.time.LocalDateTime;
@@ -20,88 +21,73 @@ public class ShipmentController {
 
     @Autowired
     private ShipmentService shipmentService;
+
     @Autowired
-    private ShipmentHistoryRepo shipmentHistoryRepo;
+    private ShipmentHistoryService shipmentHistoryService;
+
+    @Autowired
+    private PostOfficeService postOfficeService;
 
     @PostMapping("/register")
     public ResponseEntity<Shipment> registerShipment(@RequestBody Shipment shipment) {
         shipment.setStatus(StatusShipment.Регистрация);
         Shipment createdShipment = shipmentService.register(shipment);
-
-        ShipmentHistory history = ShipmentHistory.builder()
-                .shipmentId(createdShipment.getId())
-                .currentPostOffice(createdShipment.getCurrentPostOffice())
-                .timestamp(LocalDateTime.now())
-                .status(createdShipment.getStatus())
-                .build();
-        shipmentHistoryRepo.save(history);
-
+        createAndSaveShipmentHistory(createdShipment);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdShipment);
     }
 
     @PostMapping("/{id}/arrival/{postOfficeIndex}")
-    public ResponseEntity<Shipment> arriveShipment(@RequestParam Long id, @RequestParam String postOfficeId) {
+    public ResponseEntity<Shipment> arriveShipment(@PathVariable Long id, @PathVariable String postOfficeIndex) {
         Shipment shipment = shipmentService.findShipmentById(id);
         shipment.setStatus(StatusShipment.ПрибытиеВПромежуточноеОтделение);
-        PostOffice postOffice = new PostOffice();
-        postOffice.setIndex(postOfficeId);
+        PostOffice postOffice = postOfficeService.findByIndex(postOfficeIndex);
         shipment.setCurrentPostOffice(postOffice);
         Shipment updatedShipment = shipmentService.register(shipment);
-
-        ShipmentHistory history = ShipmentHistory.builder()
-                .shipmentId(id)
-                .currentPostOffice(postOffice)
-                .timestamp(LocalDateTime.now())
-                .status(updatedShipment.getStatus())
-                .build();
-        shipmentHistoryRepo.save(history);
-
+        createAndSaveShipmentHistory(updatedShipment, postOffice);
         return ResponseEntity.ok(updatedShipment);
     }
 
     @PostMapping("/{id}/departure")
-    public ResponseEntity<Shipment> departShipment(@RequestParam Long id) {
+    public ResponseEntity<Shipment> departShipment(@PathVariable Long id) {
         Shipment shipment = shipmentService.findShipmentById(id);
         shipment.setStatus(StatusShipment.УбытиеИзПромежуточногоОтделения);
         Shipment updatedShipment = shipmentService.register(shipment);
-
-        ShipmentHistory history = ShipmentHistory.builder()
-                .shipmentId(id)
-                .currentPostOffice(shipment.getCurrentPostOffice())
-                .timestamp(LocalDateTime.now())
-                .status(updatedShipment.getStatus())
-                .build();
-        shipmentHistoryRepo.save(history);
-
+        createAndSaveShipmentHistory(updatedShipment);
         return ResponseEntity.ok(updatedShipment);
     }
 
     @PostMapping("/{id}/deliver")
-    public ResponseEntity<Shipment> deliverShipment(@RequestParam Long id) {
+    public ResponseEntity<Shipment> deliverShipment(@PathVariable Long id) {
         Shipment shipment = shipmentService.findShipmentById(id);
         shipment.setStatus(StatusShipment.Выдана);
         Shipment updatedShipment = shipmentService.register(shipment);
-
-        ShipmentHistory history = ShipmentHistory.builder()
-                .shipmentId(id)
-                .currentPostOffice(updatedShipment.getCurrentPostOffice())
-                .timestamp(LocalDateTime.now())
-                .status(updatedShipment.getStatus())
-                .build();
-        shipmentHistoryRepo.save(history);
-
+        createAndSaveShipmentHistory(updatedShipment);
         return ResponseEntity.ok(updatedShipment);
     }
 
     @GetMapping("/{id}/status")
-    public ResponseEntity<Shipment> getShipmentStatus(@RequestParam Long id) {
+    public ResponseEntity<Shipment> getShipmentStatus(@PathVariable Long id) {
         Shipment shipment = shipmentService.findShipmentById(id);
         return ResponseEntity.ok(shipment);
     }
 
     @GetMapping("/{id}/history")
-    public ResponseEntity<List<ShipmentHistory>> getShipmentHistory(@RequestParam Long id) {
-        List<ShipmentHistory> history = shipmentHistoryRepo.findByShipmentId(id);
+    public ResponseEntity<List<ShipmentHistory>> getShipmentHistory(@PathVariable Long id) {
+        List<ShipmentHistory> history = shipmentHistoryService.findByShipmentId(id);
         return ResponseEntity.ok(history);
+    }
+
+    private void createAndSaveShipmentHistory(Shipment shipment) {
+        createAndSaveShipmentHistory(shipment, shipment.getCurrentPostOffice());
+    }
+
+    private void createAndSaveShipmentHistory(Shipment shipment, PostOffice postOffice) {
+        ShipmentHistory history = ShipmentHistory.builder()
+                .shipmentId(shipment.getId())
+                .currentPostOffice(postOffice)
+                .timestamp(LocalDateTime.now())
+                .status(shipment.getStatus())
+                .build();
+        shipmentHistoryService.save(history);
     }
 }
